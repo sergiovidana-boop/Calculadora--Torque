@@ -13,6 +13,13 @@
       max-width: 500px;
       padding: 0 1rem;
       box-sizing: border-box;
+      background-color: #121212; /* Fondo negro / oscuro */
+      color: #f0f0f0;            /* Texto claro */
+    }
+
+    h2 {
+      color: #ffffff;
+      text-align: center;
     }
 
     label, input, button {
@@ -24,9 +31,16 @@
     }
 
     input {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 0.6rem;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #0077cc;
     }
 
     button {
@@ -35,8 +49,9 @@
       color: white;
       border: none;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 6px;
       font-weight: bold;
+      margin-top: 1rem;
     }
 
     button:hover {
@@ -44,12 +59,13 @@
     }
 
     .resultado {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: #e0f0ff;
-      border-radius: 4px;
+      margin-top: 1.5rem;
+      padding: 1.2rem;
+      background: #1e2a3a; /* Fondo del recuadro de resultados */
+      border: 1px solid #2a3b50;
+      border-radius: 8px;
       font-size: 1.1rem;
-      line-height: 1.5;
+      line-height: 1.6;
       transition: all 0.3s ease;
     }
   </style>
@@ -111,18 +127,15 @@
         return;
       }
 
-      // Guardar el valor ingresado en localStorage
       localStorage.setItem(STORAGE_KEY, nmDeseado);
 
-      // Validar si el valor está fuera de los rangos de la herramienta
       if (nmDeseado < minNm || nmDeseado > maxNm) {
         const div = document.getElementById('resultado');
         div.innerHTML = `⚠️ El torque deseado está fuera del rango del torquímetro (${minNm} N·m a ${maxNm} N·m).`;
-        div.style.color = "red";
+        div.style.color = "#f87171"; // Rojo claro para modo oscuro
         return;
       }
 
-      // Buscar base dentro del rango adecuado
       let baseIndex = bases.findIndex((b, i) => {
         return i < bases.length - 1 &&
                nmDeseado >= bases[i].nm &&
@@ -142,10 +155,10 @@
       const lbft = nmReal * 0.737562;
       const diferencia = nmDeseado - nmReal;
 
-      // Asignación de color según nivel de desvío
-      let color = "#006400"; // verde oscuro para mejor legibilidad
-      if (Math.abs(diferencia) > 1) color = "#d97706"; // naranja
-      if (Math.abs(diferencia) > 2) color = "#dc2626"; // rojo
+      // Colores ajustados para ser legibles en fondo oscuro
+      let color = "#4ade80"; // Verde brillante
+      if (Math.abs(diferencia) > 1) color = "#fbbf24"; // Amarillo/Naranja
+      if (Math.abs(diferencia) > 2) color = "#f87171"; // Rojo claro
 
       const resultado = `
         Torque deseado: <b>${nmDeseado.toFixed(2)} N·m</b><br/>
@@ -164,11 +177,9 @@
       div.style.color = color;
     }
 
-    // Al cargar la página: primero restaurar el valor guardado y luego calcular
     cargarUltimoValor();
     calcular();
 
-    // Registro de Service Worker para PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .catch(err => console.log('Error al registrar Service Worker:', err));
