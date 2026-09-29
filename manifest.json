@@ -1,0 +1,20 @@
+{
+  "short_name": "Torque PRO",
+  "name": "Calculadora Torque Duralast PRO",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#ffffff",
+  "theme_color": "#0077cc",
+  "display": "standalone"
+}
