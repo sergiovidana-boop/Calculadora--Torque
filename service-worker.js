@@ -1,4 +1,4 @@
-const CACHE_NAME = 'torque-app-v1';
+const CACHE_NAME = 'torque-app-v2'; // Cambió a v2 para forzar la actualización
 const urlsToCache = [
   './',
   './index.html',
@@ -7,9 +7,25 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Obliga al nuevo service worker a activarse de inmediato
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('activate', event => {
+  // Elimina las versiones viejas de la caché (como la v1 con fondo blanco)
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
