@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora Torque Duralast PRO</title>
+  <link rel="icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem auto;
+      max-width: 500px;
+      padding: 0 1rem;
+      box-sizing: border-box;
+    }
+
+    label, input, button {
+      display: block;
+      margin: 0.5rem 0;
+      width: 100%;
+      font-size: 1.1rem;
+      box-sizing: border-box;
+    }
+
+    input {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 0.75rem;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    .resultado {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #e0f0ff;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Calculadora Torque Duralast – PRO</h2>
+
+  <label for="nm">Torque deseado (N·m):</label>
+  <input type="number" id="nm" min="0" step="0.1" value="10" />
+
+  <button onclick="calcular()">Calcular Ajuste</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <script>
+    const bases = [
+      { kgm: 0.7, nm: 6.87 },
+      { kgm: 1.4, nm: 13.73 },
+      { kgm: 2.1, nm: 20.60 },
+      { kgm: 2.8, nm: 27.47 },
+      { kgm: 3.5, nm: 34.34 },
+      { kgm: 4.2, nm: 41.20 },
+      { kgm: 4.9, nm: 48.07 },
+      { kgm: 5.6, nm: 54.94 },
+      { kgm: 6.3, nm: 61.80 },
+      { kgm: 7.0, nm: 68.67 },
+      { kgm: 7.7, nm: 75.54 },
+      { kgm: 8.4, nm: 82.40 },
+      { kgm: 9.1, nm: 89.27 },
+      { kgm: 9.8, nm: 96.14 },
+      { kgm: 10.5, nm: 103.01 },
+      { kgm: 11.2, nm: 109.87 },
+    ];
+
+    const pasosEntreMarcas = 10;
+    const STORAGE_KEY = 'duralast_ultimo_torque';
+
+    function pasoSize(baseIndex) {
+      if (baseIndex >= bases.length - 1) return null;
+      return (bases[baseIndex + 1].nm - bases[baseIndex].nm) / pasosEntreMarcas;
+    }
+
+    function cargarUltimoValor() {
+      const valorGuardado = localStorage.getItem(STORAGE_KEY);
+      if (valorGuardado !== null) {
+        document.getElementById('nm').value = valorGuardado;
+      }
+    }
+
+    function calcular() {
+      const nmInput = document.getElementById('nm');
+      const nmDeseado = parseFloat(nmInput.value);
+      const minNm = bases[0].nm;
+      const maxNm = bases[bases.length - 1].nm;
+
+      if (isNaN(nmDeseado) || nmDeseado <= 0) {
+        alert('Introduce un valor válido mayor a 0');
+        return;
+      }
+
+      // Guardar el valor ingresado en localStorage
+      localStorage.setItem(STORAGE_KEY, nmDeseado);
+
+      // Validar si el valor está fuera de los rangos de la herramienta
+      if (nmDeseado < minNm || nmDeseado > maxNm) {
+        const div = document.getElementById('resultado');
+        div.innerHTML = `⚠️ El torque deseado está fuera del rango del torquímetro (${minNm} N·m a ${maxNm} N·m).`;
+        div.style.color = "red";
+        return;
+      }
+
+      // Buscar base dentro del rango adecuado
+      let baseIndex = bases.findIndex((b, i) => {
+        return i < bases.length - 1 &&
+               nmDeseado >= bases[i].nm &&
+               nmDeseado <= bases[i + 1].nm;
+      });
+
+      const base = bases[baseIndex];
+      const paso = pasoSize(baseIndex);
+
+      let pasos = Math.round((nmDeseado - base.nm) / paso);
+
+      if (pasos < 0) pasos = 0;
+      if (pasos > pasosEntreMarcas) pasos = pasosEntreMarcas;
+
+      const nmReal = base.nm + pasos * paso;
+      const kgmReal = nmReal / 9.81;
+      const lbft = nmReal * 0.737562;
+      const diferencia = nmDeseado - nmReal;
+
+      // Asignación de color según nivel de desvío
+      let color = "#006400"; // verde oscuro para mejor legibilidad
+      if (Math.abs(diferencia) > 1) color = "#d97706"; // naranja
+      if (Math.abs(diferencia) > 2) color = "#dc2626"; // rojo
+
+      const resultado = `
+        Torque deseado: <b>${nmDeseado.toFixed(2)} N·m</b><br/>
+        Base en ruleta: <b>${base.kgm.toFixed(1)} kg·m (${base.nm.toFixed(2)} N·m)</b><br/>
+        Avanza: <b>${pasos} paso(s)</b><br/><br/>
+
+        🔧 Torque real ajustado: <b>${nmReal.toFixed(2)} N·m</b><br/>
+        ⚖️ En kg·m: <b>${kgmReal.toFixed(2)}</b><br/>
+        📏 En lb-ft: <b>${lbft.toFixed(2)}</b><br/><br/>
+
+        📊 Diferencia: <b>${diferencia.toFixed(2)} N·m</b>
+      `;
+
+      const div = document.getElementById('resultado');
+      div.innerHTML = resultado;
+      div.style.color = color;
+    }
+
+    // Al cargar la página: primero restaurar el valor guardado y luego calcular
+    cargarUltimoValor();
+    calcular();
+
+    // Registro de Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(err => console.log('Error al registrar Service Worker:', err));
+    }
+  </script>
+</body>
+</html>
